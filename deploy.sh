@@ -69,6 +69,7 @@ cd app
 az webapp up \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP \
+  --plan $APP_SERVICE_PLAN \
   --runtime "NODE:22-lts" \
   --sku F1
 

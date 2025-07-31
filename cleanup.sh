@@ -1,17 +1,20 @@
 #!/bin/bash
 
 # Azure Redis Cache Test Cleanup Script
-# This script removes all Azure resources created by the deployment
+# This script removes all Azure resources created by Terraform
 
 set -e
 
-RESOURCE_GROUP="redis-cache-test-rg"
+echo "🗑️  Cleaning up Azure resources using Terraform..."
 
-echo "🗑️  Cleaning up Azure resources..."
-echo "Resource Group: $RESOURCE_GROUP"
+# Check if Terraform state exists
+if [ ! -f "terraform.tfstate" ]; then
+    echo "⚠️  No terraform.tfstate file found. Nothing to destroy."
+    echo "   If resources were created manually, you may need to delete them via Azure CLI or portal."
+    exit 0
+fi
 
-# Delete the entire resource group (this removes all resources within it)
-az group delete --name $RESOURCE_GROUP --yes --no-wait
+# Destroy resources using Terraform
+terraform destroy -auto-approve
 
-echo "✅ Cleanup initiated. Resources are being deleted in the background."
-echo "   Use 'az group show --name $RESOURCE_GROUP' to check deletion status."
+echo "✅ All Terraform-managed resources have been destroyed."

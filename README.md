@@ -4,16 +4,26 @@ A simple Node.js Express application for testing Azure Redis Cache connectivity 
 
 ## Quick Start
 
-For easy deployment and cleanup, use the provided scripts:
+For easy deployment and cleanup, use the provided Terraform-based scripts:
+
+### Prerequisites
+- [Terraform](https://www.terraform.io/downloads.html) installed (>= 1.0)
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed and logged in (`az login`)
+- Node.js >= 20.0.0
 
 ### Automated Deployment
 ```bash
+# Optional: Copy and customize variables
+cp terraform.tfvars.example terraform.tfvars
+
+# Deploy infrastructure and application
 ./deploy.sh
 ```
 This script will:
-- Create an Azure resource group
-- Create a Redis Cache instance
-- Create an App Service with the application
+- Initialize Terraform
+- Create an Azure resource group using Terraform
+- Create a Redis Cache instance (Basic SKU)
+- Create an App Service Plan and Web App
 - Configure environment variables automatically
 - Deploy the application using `az webapp up`
 
@@ -21,7 +31,7 @@ This script will:
 ```bash
 ./cleanup.sh
 ```
-This script removes all Azure resources created by the deployment script.
+This script removes all Azure resources created by Terraform using `terraform destroy`.
 
 ## Features
 
@@ -34,8 +44,9 @@ This script removes all Azure resources created by the deployment script.
 ## Prerequisites
 
 - Node.js >= 20.0.0
-- Azure Redis Cache instance
-- Redis connection URL and access key
+- [Terraform](https://www.terraform.io/downloads.html) (>= 1.0)
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) logged in (`az login`)
+- Azure subscription with sufficient permissions
 
 ## Installation
 
@@ -53,19 +64,28 @@ npm install
 
 ## Configuration
 
-Set the following environment variables:
+### Terraform Variables
 
-- `REDIS_URL`: Your Azure Redis Cache URL (e.g., `redis://your-cache-name.redis.cache.windows.net:6380`)
-- `REDIS_ACCESS_KEY`: Your Azure Redis Cache access key
-- `PORT`: (Optional) Port number for the server (defaults to 3000)
-
-### Example
+Customize deployment by copying and editing the variables file:
 
 ```bash
-export REDIS_URL="redis://your-cache-name.redis.cache.windows.net:6380"
-export REDIS_ACCESS_KEY="your-redis-access-key"
-export PORT=3000
+cp terraform.tfvars.example terraform.tfvars
 ```
+
+Available variables:
+- `resource_group_name`: Name of the Azure resource group (default: "redis-cache-test-rg")
+- `location`: Azure region (default: "australiasoutheast")
+- `redis_name`: Base name for Redis cache (default: "redis-cache-test")
+- `app_service_plan_name`: App Service Plan name (default: "redis-cache-test-plan")
+- `app_name`: Base name for web app (default: "redis-cache-test-app")
+- `tags`: Resource tags
+
+### Environment Variables (Auto-configured)
+
+Terraform automatically configures these environment variables:
+- `REDIS_URL`: Azure Redis Cache URL
+- `REDIS_ACCESS_KEY`: Redis access key
+- `PORT`: Server port (defaults to 3000)
 
 ## Usage
 
@@ -101,21 +121,41 @@ curl http://localhost:3000/get/mykey
 
 ## Deployment
 
-### Azure App Service
+### Infrastructure as Code with Terraform
 
-Deploy using Azure CLI:
+The deployment uses Terraform for infrastructure management:
+
+1. **Initialize Terraform:**
+   ```bash
+   terraform init
+   ```
+
+2. **Plan deployment:**
+   ```bash
+   terraform plan
+   ```
+
+3. **Apply infrastructure:**
+   ```bash
+   terraform apply
+   ```
+
+4. **Deploy application:**
+   ```bash
+   cd app
+   az webapp up --name $(terraform output -raw app_service_name) \
+     --resource-group $(terraform output -raw resource_group_name) \
+     --plan $(terraform output -raw app_service_plan_name) \
+     --runtime "NODE:22-lts" --sku F1
+   ```
+
+### Manual Configuration (if needed)
 
 ```bash
-cd app
-az webapp up --name your-app-name --resource-group your-resource-group --location eastus
-```
-
-Then configure environment variables:
-
-```bash
-az webapp config appsettings set --name your-app-name --resource-group your-resource-group --settings \
-  REDIS_URL="redis://your-cache-name.redis.cache.windows.net:6380" \
-  REDIS_ACCESS_KEY="your-redis-access-key"
+az webapp config appsettings set \
+  --name your-app-name \
+  --resource-group your-resource-group \
+  --settings REDIS_URL="your-redis-url" REDIS_ACCESS_KEY="your-key"
 ```
 
 ## Project Structure
@@ -126,11 +166,24 @@ azure-redis-cache-test/
 │   ├── package.json          # Node.js dependencies
 │   ├── package-lock.json     # Locked dependency versions
 │   └── server.js             # Main application file
-├── deploy.sh                 # Azure deployment script
-├── cleanup.sh               # Resource cleanup script
+├── main.tf                   # Main Terraform configuration
+├── variables.tf              # Terraform variables
+├── outputs.tf                # Terraform outputs
+├── terraform.tfvars.example  # Example Terraform variables
+├── deploy.sh                 # Terraform-based deployment script
+├── cleanup.sh               # Terraform destroy script
 ├── .gitignore              # Git ignore rules
 └── README.md               # This file
 ```
+
+## Terraform Resources
+
+The Terraform configuration creates:
+- **Resource Group**: Container for all resources
+- **Redis Cache**: Basic SKU with C0 capacity
+- **App Service Plan**: Linux-based F1 (Free) tier
+- **Linux Web App**: Node.js 22-lts runtime
+- **App Settings**: Automatic Redis connection configuration
 
 ## Error Handling
 

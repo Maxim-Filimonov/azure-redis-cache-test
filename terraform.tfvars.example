@@ -1,0 +1,17 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and customize the values
+
+# Required: Azure subscription ID
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+
+resource_group_name    = "redis-cache-test-rg"
+location              = "australiasoutheast"
+redis_name            = "redis-cache-test"
+app_service_plan_name = "redis-cache-test-plan"
+app_name              = "redis-cache-test-app"
+
+tags = {
+  Environment = "test"
+  Project     = "redis-cache-test"
+  Owner       = "your-name"
+}

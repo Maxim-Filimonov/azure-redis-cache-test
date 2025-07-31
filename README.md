@@ -2,6 +2,27 @@
 
 A simple Node.js Express application for testing Azure Redis Cache connectivity and basic operations.
 
+## Quick Start
+
+For easy deployment and cleanup, use the provided scripts:
+
+### Automated Deployment
+```bash
+./deploy.sh
+```
+This script will:
+- Create an Azure resource group
+- Create a Redis Cache instance
+- Create an App Service with the application
+- Configure environment variables automatically
+- Deploy the application using `az webapp up`
+
+### Cleanup Resources
+```bash
+./cleanup.sh
+```
+This script removes all Azure resources created by the deployment script.
+
 ## Features
 
 - Health check endpoint to verify Redis connectivity
